@@ -26,6 +26,32 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   //    image_url: URL of a publicly accessible image
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
+  
+  app.get( "/filteredImage", async ( req, res ) => {
+    let imageUrl = req.query.image_url
+    // Validate image ulr input
+    if(imageUrl == null) {
+       return res.status(400).send('Please input image link');
+    }
+
+    // Validate image by regex
+    const searchUrl = imageUrl.match(/^http[^\?]*.(jpg|jpeg|gif|png|tiff|bmp)(\?(.*))?$/gmi);
+    if(searchUrl == null) {
+      return res.status(400).send('Link input is not image');
+    } 
+
+    try {
+      console.log('Start download file from: ' + imageUrl)
+      const filePath = await filterImageFromURL(imageUrl);
+      res.sendFile(filePath, function() {
+        deleteLocalFiles([filePath]);
+      });
+
+      console.log('Image: ' + imageUrl + ' downloaded')
+    } catch(error) {    
+      return res.status(400).send('Fail to download image (' +  imageUrl + ') with error: ' + error);
+    }    
+  });
 
   /**************************************************************************** */
 
